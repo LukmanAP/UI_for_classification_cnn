@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasifikasi Batik</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        img {
+            max-width: 300px;
+            margin-top: 20px;
+        }
+        .camera-preview {
+            display: none;
+            margin-top: 20px;
+        }
+        .camera-preview video {
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+        .camera-preview button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Klasifikasi Batik Nusantara</h1>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <!-- Input file dengan capture camera -->
+        <input type="file" name="file" accept="image/*" capture="environment" required>
+        <button type="submit">Upload dan Prediksi</button>
+    </form>
+
+    <!-- Tampilkan hasil prediksi -->
+    {% if prediction %}
+        <h2>Hasil Prediksi: {{ prediction }}</h2>
+        <img src="{{ image_path }}" alt="Uploaded Image">
+    {% endif %}
+
+    <!-- Opsi tambahan: Buka kamera langsung di halaman -->
+    <div class="camera-preview" id="cameraPreview">
+        <video id="video" autoplay></video>
+        <button id="captureButton">Ambil Foto</button>
+    </div>
+    <button id="openCameraButton">Buka Kamera</button>
+
+    <script>
+        // Script untuk membuka kamera langsung di halaman
+        const openCameraButton = document.getElementById('openCameraButton');
+        const cameraPreview = document.getElementById('cameraPreview');
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('captureButton');
+        const fileInput = document.querySelector('input[type="file"]');
+
+        // Buka kamera saat tombol ditekan
+        openCameraButton.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                cameraPreview.style.display = 'block';
+                openCameraButton.style.display = 'none';
+            } catch (error) {
+                alert('Tidak dapat mengakses kamera. Pastikan Anda mengizinkan akses kamera.');
+                console.error('Error accessing camera:', error);
+            }
+        });
+
+        // Ambil foto dari kamera
+        captureButton.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Konversi canvas ke file gambar
+            canvas.toBlob((blob) => {
+                const file = new File([blob], 'captured_image.png', { type: 'image/png' });
+
+                // Set file ke input file
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+
+                // Sembunyikan kamera dan tampilkan tombol buka kamera
+                cameraPreview.style.display = 'none';
+                openCameraButton.style.display = 'block';
+
+                // Otomatis submit form setelah mengambil foto
+                document.querySelector('form').submit();
+            }, 'image/png');
+        });
+    </script>
+</body>
+</html>
